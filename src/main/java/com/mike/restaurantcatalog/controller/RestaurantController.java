@@ -1,10 +1,14 @@
 package com.mike.restaurantcatalog.controller;
 
 
+import com.mike.restaurantcatalog.dto.RestaurantDTO;
 import com.mike.restaurantcatalog.service.RestaurantService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/restaurant")
@@ -12,5 +16,24 @@ public class RestaurantController {
 
     @Autowired
     RestaurantService restaurantService;
+
+    @GetMapping("/fetchAllRestaurants")
+    public ResponseEntity<List<RestaurantDTO>> fetchAllRestaurants() {
+        List<RestaurantDTO> allRestaurantEntities = restaurantService.findAllRestaurants();
+        return new ResponseEntity<>(allRestaurantEntities, HttpStatus.OK);
+    }
+
+    @PostMapping("/addRestaurant")
+    public ResponseEntity<RestaurantDTO> addRestaurant(@RequestBody RestaurantDTO restaurantDTO) {
+        RestaurantDTO restaurantAdded = restaurantService.addRestaurantInDB(restaurantDTO);
+        return new ResponseEntity<>(restaurantAdded, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/fetchById/{id}")
+    public ResponseEntity<RestaurantDTO> findRestaurantById(@PathVariable Integer id) {
+        RestaurantDTO restaurantFound = restaurantService.fetchRestaurantById(id);
+        return new ResponseEntity<>(restaurantFound, HttpStatus.OK);
+    }
+
 
 }
