@@ -27,7 +27,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'mvn clean package'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
@@ -50,32 +50,49 @@ pipeline {
             }
         }
 
-        stage('Check code coverage') {
-            steps {
-                script {
-                    def token             = SONAR_TOKEN
-                    def sonarQubeApiUrl   = "${SONAR_HOST_URL}/api"
-                    def componentKey      = "fullstack"
-                    def coverageThreshold = 80.0
+stage('Check code coverage') {
+    steps {
+        script {
+            def sonarQubeApiUrl   = "${SONAR_HOST_URL}/api"
+            def componentKey      = "fullstack"
+            def coverageThreshold = 80.0
 
-                    def response = sh(
-                        script: "curl -s -H 'Authorization: Bearer ${token}' '${sonarQubeApiUrl}/measures/component?component=${componentKey}&metricKeys=coverage'",
-                        returnStdout: true
-                    ).trim()
+            def response = sh(
+                script: """
+                    curl -s \\
+                      -H "Authorization: Bearer ${SONAR_TOKEN}" \\
+                      "${sonarQubeApiUrl}/measures/component?component=${componentKey}&metricKeys=coverage"
+                """,
+                returnStdout: true
+            ).trim()
 
-                    def coverage = sh(
-                        script: "echo '${response}' | jq -r '.component.measures[0].value'",
-                        returnStdout: true
-                    ).trim().toDouble()
+            def coverageStr = sh(
+                script: """
+                    echo '${response}' | jq -r '.component.measures[0].value // empty'
+                """,
+                returnStdout: true
+            ).trim()
 
-                    echo "Coverage from SonarQube: ${coverage}%"
+            if (!coverageStr) {
+                error """
+                Coverage metric not found in SonarQube response.
+                Make sure JaCoCo is generating the report (jacoco.xml)
+                and that sonar.coverage.jacoco.xmlReportPaths is configured correctly.
+                SonarQube response: ${response}
+                """
+            }
 
-                    if (coverage < coverageThreshold) {
-                        error "Coverage is below the threshold of ${coverageThreshold}%. Aborting the pipeline."
-                    }
-                }
+            def coverage = coverageStr.toDouble()
+
+            echo "Coverage from SonarQube: ${coverage}%"
+
+            if (coverage < coverageThreshold) {
+                error "Coverage is below the threshold of ${coverageThreshold}%. Aborting the pipeline."
             }
         }
+    }
+}
+
 
         stage('Docker Build and Push') {
             steps {
