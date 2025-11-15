@@ -53,8 +53,9 @@ pipeline {
 stage('Check code coverage') {
     steps {
         script {
-            def sonarQubeApiUrl = "${SONAR_HOST_URL}/api"
-            def componentKey = "restaurantcatalog"
+            def sonarQubeApiUrl   = "${SONAR_HOST_URL}/api"
+            def componentKey      = "restaurantcatalog"
+            def coverageThreshold = 75.0
 
             def response = sh(
                 script: """
@@ -64,10 +65,29 @@ stage('Check code coverage') {
                 returnStdout: true
             ).trim()
 
-            echo "RAW Sonar API response: >>>${response}<<<"
+            echo "SonarQube coverage API response: ${response}"
+
+            def coverageStr = sh(
+                script: """
+                    printf '%s' '${response}' | jq -r '.component.measures[0].value // empty'
+                """,
+                returnStdout: true
+            ).trim()
+
+            if (!coverageStr) {
+                error "Coverage metric not found in SonarQube response. Response: ${response}"
+            }
+
+            def coverage = coverageStr.toDouble()
+            echo "Coverage from SonarQube: ${coverage}%"
+
+            if (coverage < coverageThreshold) {
+                error "Coverage is below the threshold of ${coverageThreshold}%. Aborting the pipeline."
+            }
         }
     }
 }
+
 
 
         stage('Docker Build and Push') {
