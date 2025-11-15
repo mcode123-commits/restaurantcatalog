@@ -119,7 +119,7 @@ stage('Check code coverage') {
 
                 script {
                     sh """
-                      sed -i "s|image:.*|image: mankusmichal/restaurant-catalog:${VERSION}|" aws/restaurant-manifest.yml
+                      sed -i "s|image:.*|image: mankusmichal/restaurant-catalog:${VERSION}|" aws/restaurantcatalog-manifest.yml
                     """
 
                     sh '''
