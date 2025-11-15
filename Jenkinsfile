@@ -129,9 +129,12 @@ stage('Check code coverage') {
                       git commit -m "Update image tag" || echo "No changes to commit"
                     '''
 
-                    sshagent(credentials: ['git-ssh']) {
-                        sh 'git push origin master'
-                    }
+                sshagent(credentials: ['git-ssh']) {
+                    sh '''
+                      git checkout -B master
+                      git push origin master
+                    '''
+                }
                 }
             }
         }
