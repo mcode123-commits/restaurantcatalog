@@ -42,7 +42,7 @@ pipeline {
                 withSonarQubeEnv('sonarqube') {
                     sh """
                       mvn sonar:sonar \
-                        -Dsonar.projectKey=fullstack \
+                        -Dsonar.projectKey=restaurantcatalog \
                         -Dsonar.host.url=${SONAR_HOST_URL} \
                         -Dsonar.login=${SONAR_TOKEN}
                     """
@@ -54,7 +54,7 @@ stage('Check code coverage') {
     steps {
         script {
             def sonarQubeApiUrl = "${SONAR_HOST_URL}/api"
-            def componentKey = "fullstack"
+            def componentKey = "restaurantcatalog"
 
             def response = sh(
                 script: """
